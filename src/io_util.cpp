@@ -73,8 +73,9 @@ ciconvert (char *filename)
 #if defined _WIN32 || defined __WIN32__ || defined __CYGWIN__ || defined __EMX__ || defined __DJGPP__
 	/* For __EMSCRIPTEN__ remember to -s CASE_INSENSITIVE_FS=1 */
   return;
-#elif defined __EMSCRIPTEN__
-  /* convert windows-style backslashes in paths */
+#elif defined __EMSCRIPTEN__ || defined __amigaos__
+  /* convert windows-style backslashes in paths (AmigaDOS names are not
+     case-sensitive either) */
   char *pcur_elt = filename;
   while (*pcur_elt)
 	{

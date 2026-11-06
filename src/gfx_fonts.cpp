@@ -130,8 +130,14 @@ int gfx_fonts_init()
   }
 
   /* Load system font from compiled data */
+#ifdef __amigaos__
+  /* OpenGPU's SDL2_ttf.module cannot read the Windows .fon bitmap font;
+     the system text uses the dialog font, Liberation Sans, instead */
+  system_font = load_default_font();
+#else
   system_font = TTF_OpenFontRW(SDL_RWFromConstMem(vgasys_fon, sizeof(vgasys_fon)),
 			       1, FONT_SIZE);
+#endif
   if (system_font == NULL)
     {
       log_error("Failed to load built-in 'vgasys.fon' font: %s", SDL_GetError());

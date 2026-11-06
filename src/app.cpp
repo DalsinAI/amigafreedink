@@ -193,7 +193,12 @@ App::App() :
   g_b_no_write_ini(0),
   opt_version(108),
   dinkini_playmidi(false),
+#ifdef __amigaos__
+  /* the software display, in a window on the Workbench */
+  dinkgl(false), windowed(true) {
+#else
   dinkgl(true), windowed(false) {
+#endif
   /* chdir to resource paths under woe&android */
   app_chdir();
 
