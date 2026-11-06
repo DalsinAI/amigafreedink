@@ -20,6 +20,8 @@
  * <http://www.gnu.org/licenses/>.
  */
 
+#include "config.h"
+
 #include "IOGfxGLFuncs.h"
 
 #include "SDL.h"

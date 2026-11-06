@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "ImageLoader.h"
 
 #include "SDL.h"

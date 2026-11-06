@@ -24,6 +24,8 @@
 #ifndef _DINKC_CONSOLE_H
 #define _DINKC_CONSOLE_H
 
+#include "config.h"
+
 #include "SDL.h"
 
 extern int console_active;

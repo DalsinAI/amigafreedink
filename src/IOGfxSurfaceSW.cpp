@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "IOGfxSurfaceSW.h"
 
 #include "SDL.h"
