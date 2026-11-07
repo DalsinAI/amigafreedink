@@ -1,0 +1,113 @@
+# GNU FreeDink 109.6 for AmigaOS 3.x, 68040/68060 + FPU, on OpenGPU's SDL 2.
+#
+#   make -f amiga/Makefile.amigaos -j2 dist \
+#        STOVE=/path/to/openamigagcc-16.2.0-open4 \
+#        NDK=/path/to/OpenNDK/Include_H SDL2KIT=/path/to/opengpu-sdk \
+#        DINKDATA=/path/to/freedink-data-1.08.20190120
+#
+# src/Makefile.am's freedink (not the editor) with the software display
+# only: the OpenGL 2 renderer (IOGfxDisplayGL2, IOGfxSurfaceGL2,
+# IOGfxGLFuncs) is left out, and with it glm. amiga/config.h stands in
+# for configure's (no gettext, no fontconfig). gnulib's xmalloc and hash
+# and getopt from gnulib/lib (libnix's getopt_long_only never returned;
+# amiga/gnulib/getopt.h is getopt.in.h with configure's substitutions). SDL2_gfx 1.0.4 (zlib licence:
+# its rotozoom, primitives and framerate) is built in from amiga/SDL2_gfx.
+# SDL2KIT is the OpenGPU developer kit (SDL2, SDL2_image, SDL2_mixer,
+# SDL2_ttf: the program's halves of LIBS:OpenGPU's modules). DINKDATA is
+# Debian's freedink-data orig tarball, unpacked: its dink/ is the game.
+# amiga/amiga_rwops.c (-Wl,--wrap=SDL_RWFromFP): the RWops FreeDink makes
+# on its own FILEs read through the program's stdio, not SDL2.module's.
+
+STOVE   ?= $(HOME)/CradleLab/toolchain/openamigagcc-16.2.0-open4-x86_64-linux
+NDK     ?= $(HOME)/CradleLab/gfopensdk/OpenNDK/Include_H
+SDL2KIT ?= /mnt/amigachrome/team2/deps/opengpu-sdk
+DINKDATA ?= /mnt/amigachrome/team2/src-dl/freedink-data/x/freedink-data-1.08.20190120
+CC      = $(STOVE)/bin/m68k-amigaos-gcc
+CXX     = $(STOVE)/bin/m68k-amigaos-g++
+STRIP   = $(STOVE)/bin/m68k-amigaos-strip
+CPU     ?= -m68040 -m68881
+# -fno-tree-loop-distribute-patterns: GCC 16's loop miscompile (the kit's
+# sdl2-config gives it for GCC 16 too).
+OPT     ?= -O2 -fomit-frame-pointer -fno-tree-loop-distribute-patterns
+
+BUILD   = build/amigaos
+OBJDIR  = $(BUILD)/obj
+PROG    = FreeDink
+OUT     = dist/FreeDink
+
+DEFS    = -D__amigaos__ -DHAVE_CONFIG_H -DBUILD_DATA_DIR=\"PROGDIR:data\" -DLOCALEDIR=\"PROGDIR:locale\"
+INC     = -Iamiga -Iamiga/gnulib -Iamiga/SDL2_gfx -Ignulib/lib -I$(SDL2KIT)/include -I$(SDL2KIT)/include/SDL2
+CFLAGS  = -noixemul $(OPT) $(CPU) -fno-common -MMD -MP -w
+CXXFLAGS = $(CFLAGS) $(DEFS) $(INC) -std=gnu++11 -include amiga/amiga_prefix.hpp
+LDFLAGS = -noixemul $(CPU) -Wl,--wrap=getenv -Wl,--wrap=SDL_RWFromFP
+LIBS    = -L$(SDL2KIT)/lib -lSDL2_mixer -lSDL2_image -lSDL2_ttf -lSDL2 -lpthread -latomic -lm
+
+CXXSRC  = $(addprefix src/,app.cpp bgm.cpp BgTilesetsManager.cpp dinkini.cpp DMod.cpp fastfile.cpp \
+            str_util.cpp io_util.cpp EditorMap.cpp editor_screen.cpp gfx.cpp gfx_tiles.cpp \
+            gfx_palette.cpp gfx_fonts.cpp hardness_tiles.cpp ImageLoader.cpp IOGfxDisplay.cpp \
+            IOGfxDisplaySW.cpp IOGfxSurface.cpp IOGfxSurfaceSW.cpp IOGfxPrimitivesSW.cpp \
+            live_screen.cpp live_sprite.cpp live_sprites_manager.cpp rect.cpp resources.cpp \
+            input.cpp freedink_xpm.cpp paths.cpp log.cpp gfx_sprites.cpp vgasys_fon.cpp sfx.cpp \
+            AppFreeDink.cpp IOTouchDragAnywhere.cpp freedink.cpp freedink_main.cpp update_frame.cpp \
+            brain.cpp brain_bounce.cpp brain_button.cpp brain_diagonal.cpp brain_duck.cpp \
+            brain_keyboard.cpp brain_lateral.cpp brain_missile.cpp brain_mouse.cpp brain_none.cpp \
+            brain_onetime.cpp brain_people.cpp brain_pig.cpp brain_repeat.cpp brain_scale.cpp \
+            brain_shadow.cpp brain_text.cpp dinkc_bindings.cpp dinkc.cpp dinkc_console.cpp \
+            dinkc_console_renderer.cpp debug.cpp debug_renderer.cpp game_choice.cpp \
+            game_choice_renderer.cpp game_engine.cpp game_state.cpp i18n.cpp inventory.cpp \
+            meminfo.cpp savegame.cpp status.cpp text.cpp)
+CSRC    = gnulib/lib/xmalloc.c gnulib/lib/hash.c gnulib/lib/getopt.c gnulib/lib/getopt1.c \
+          amiga/SDL2_gfx/SDL2_rotozoom.c amiga/SDL2_gfx/SDL2_gfxPrimitives.c \
+          amiga/SDL2_gfx/SDL2_framerate.c \
+          amiga/amiga_start.c amiga/amiga_screens.c amiga/amiga_env.c amiga/amiga_rwops.c amiga/stack.c
+OBJS    = $(CXXSRC:%.cpp=$(OBJDIR)/%.o) $(CSRC:%.c=$(OBJDIR)/%.o)
+ICONS   = $(wildcard amiga/icons/*.info)
+
+all: $(BUILD)/$(PROG)
+
+$(BUILD)/$(PROG): $(OBJS)
+	$(CXX) $(LDFLAGS) -o $@.debug $(OBJS) $(LIBS)
+	$(STRIP) -o $@ $@.debug
+
+$(OBJDIR)/amiga/%.o: amiga/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -std=gnu99 -Iamiga/SDL2_gfx -I$(SDL2KIT)/include/SDL2 -I$(NDK) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -std=gnu99 $(DEFS) $(INC) -c -o $@ $<
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c -o $@ $<
+
+# The drawer: the program; dink/ (the game: freedink-data's graphics,
+# tiles, sounds, music and story, its replacements' licences in
+# doc/licenses); data/freedink with FreeDink's own font and sounds;
+# ReadMe, upstream's README and the licences. The saved games and the
+# settings are kept in the drawer's user/.dink.
+dist: $(BUILD)/$(PROG) $(ICONS) AMIGA_PORT.md
+	rm -rf $(OUT) && mkdir -p $(OUT)/data/freedink $(OUT)/doc
+	cp $(BUILD)/$(PROG) $(OUT)/
+	cp -R $(DINKDATA)/dink $(OUT)/
+	rm -rf $(OUT)/dink/l10n
+	cp share/freedink/LiberationSans-Regular.ttf share/freedink/*.wav $(OUT)/data/freedink/
+	cp -R $(DINKDATA)/licenses $(OUT)/doc/licenses
+	cp $(DINKDATA)/README-REPLACEMENTS.txt $(DINKDATA)/README.txt $(OUT)/doc/
+	cp share/README.fonts $(OUT)/doc/README-fonts.txt
+	cp AMIGA_PORT.md $(OUT)/ReadMe
+	cp README $(OUT)/ReadMe-upstream
+	cp COPYING $(OUT)/COPYING.txt
+	cp amiga/SDL2_gfx/COPYING $(OUT)/doc/COPYING-SDL2_gfx.txt
+	cp amiga/icons/FreeDink.info amiga/icons/ReadMe.info $(OUT)/
+	for f in ReadMe-upstream COPYING.txt; do cp amiga/icons/ReadMe.info $(OUT)/$$f.info; done
+	cp amiga/icons/Folder.info $(OUT)/dink.info
+	cp amiga/icons/Folder.info $(OUT)/doc.info
+	cp amiga/icons/FreeDink-drawer.info dist/FreeDink.info
+
+-include $(OBJS:.o=.d)
+
+clean:
+	rm -rf $(BUILD)
+
+.PHONY: all clean dist

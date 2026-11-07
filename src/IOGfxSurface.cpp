@@ -1,3 +1,5 @@
+#include "config.h"
+
 #include "IOGfxSurface.h"
 
 IOGfxSurface::IOGfxSurface(int w, int h)

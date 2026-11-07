@@ -130,8 +130,14 @@ int gfx_fonts_init()
   }
 
   /* Load system font from compiled data */
+#ifdef __amigaos__
+  /* OpenGPU's SDL2_ttf.module cannot read the Windows .fon bitmap font;
+     the system text uses the dialog font, Liberation Sans, instead */
+  system_font = load_default_font();
+#else
   system_font = TTF_OpenFontRW(SDL_RWFromConstMem(vgasys_fon, sizeof(vgasys_fon)),
 			       1, FONT_SIZE);
+#endif
   if (system_font == NULL)
     {
       log_error("Failed to load built-in 'vgasys.fon' font: %s", SDL_GetError());
@@ -293,10 +299,10 @@ void set_font_color(int no, int r, int g, int b)
  */
 void setup_font(TTF_Font *font)
 {
-  char *familyname = TTF_FontFaceFamilyName(font);
+  const char *familyname = TTF_FontFaceFamilyName(font);
   if(familyname)
     log_info("The family name of the face in the font is: %s", familyname);
-  char *stylename = TTF_FontFaceStyleName(font);
+  const char *stylename = TTF_FontFaceStyleName(font);
   if(stylename)
     log_info("The name of the face in the font is: %s", stylename);
   log_info("The font max height is: %d", TTF_FontHeight(font));

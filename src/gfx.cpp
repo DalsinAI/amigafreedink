@@ -37,7 +37,9 @@
 #include "gfx.h"
 #include "IOGfxPrimitives.h"
 #include "IOGfxDisplaySW.h"
+#ifndef __amigaos__
 #include "IOGfxDisplayGL2.h"
+#endif
 #include "ImageLoader.h"
 #include "gfx_fonts.h"
 #include "gfx_palette.h"
@@ -91,10 +93,13 @@ IOGfxDisplay* g_display = NULL;
  * Graphics subsystem initalization
  */
 int gfx_init(bool dinkgl, bool windowed, char* splash_path) {
+#ifndef __amigaos__
+	/* AmigaOS: the software display only (no OpenGL 2 renderer here) */
 	if (dinkgl)
 		g_display = new IOGfxDisplayGL2(GFX_RES_W, GFX_RES_H, truecolor,
 									   windowed ? SDL_WINDOW_RESIZABLE : SDL_WINDOW_FULLSCREEN_DESKTOP);
 	else
+#endif
 		g_display = new IOGfxDisplaySW(GFX_RES_W, GFX_RES_H, truecolor,
 										windowed ? SDL_WINDOW_RESIZABLE : SDL_WINDOW_FULLSCREEN_DESKTOP);
 	/* Note: SDL_WINDOW_FULLSCREEN may not respect aspect ratio, _DESKTOP does */

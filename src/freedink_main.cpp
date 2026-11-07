@@ -35,8 +35,15 @@
 /**
  * Bootstrap
  */
+#ifdef __amigaos__
+extern "C" void amiga_start(void); /* amiga/amiga_start.c: into the drawer */
+#endif
+
 int main(int argc, char* argv[])
 {
+#ifdef __amigaos__
+	amiga_start();
+#endif
 	// Create app
 	// Store it in the heap as Emscripten will trash the stack
 	AppFreeDink* freedink = new AppFreeDink();
