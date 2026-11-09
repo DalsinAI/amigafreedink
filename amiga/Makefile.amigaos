@@ -101,8 +101,6 @@ dist: $(BUILD)/$(PROG) $(ICONS) AMIGA_PORT.md
 	cp amiga/SDL2_gfx/COPYING $(OUT)/doc/COPYING-SDL2_gfx.txt
 	cp amiga/icons/FreeDink.info amiga/icons/ReadMe.info $(OUT)/
 	for f in ReadMe-upstream COPYING.txt; do cp amiga/icons/ReadMe.info $(OUT)/$$f.info; done
-	cp amiga/icons/Folder.info $(OUT)/dink.info
-	cp amiga/icons/Folder.info $(OUT)/doc.info
 	cp amiga/icons/FreeDink-drawer.info dist/FreeDink.info
 
 -include $(OBJS:.o=.d)

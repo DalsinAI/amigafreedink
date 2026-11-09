@@ -96,5 +96,5 @@ public domain, file by file in doc/README-REPLACEMENTS.txt and
 doc/licenses (freedink-data's own COPYING is GPL 3). Liberation Sans: GPL with
 the font exception (doc/README-fonts.txt).
 SDL2_gfx: zlib licence (doc/COPYING-SDL2_gfx.txt). The Amiga files
-(amiga/): the AmiCradle Team, GPL 3 or later; the icon is upstream's
-share/pixmaps/freedink.png, made smaller.
+(amiga/): the AmiCradle Team, GPL 3 or later; the icons are our
+own GlowIcons (amiga/icons/art/freedink.svg).
